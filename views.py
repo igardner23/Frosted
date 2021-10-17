@@ -19,6 +19,8 @@ from fuzzywuzzy import fuzz
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
+
+## This is fine and all but....
 @csrf_exempt
 def webhook_endpoint(request):
     print(request)
@@ -31,8 +33,8 @@ def webhook_endpoint(request):
 
 wcapi = API(
     url="http://harrison.frostedleaf.co/",
-    consumer_key="ck_46cb7f8f2af8b47639216a7ab0bfa7d9b6ac6d74",
-    consumer_secret="cs_a4571186a010898f622aadecd7048c4c7b576594",
+    consumer_key="",## Do this properly
+    consumer_secret="",## Same
     version="wc/v1",
     timeout=15)
 
@@ -45,13 +47,6 @@ def BatchPipeline(metrc, stock, weight, product_id, store_id, user_info):
     "store": Store.objects.get(id=store_id)
 }
 )
-## Okay, so I think I'm done in here for the moment
-
-## Create additional queryset that pulls register information
-## regref is referring to some kind of string I'll be using to refer to each register, possibly find a better way of expressing this
-##
-
-## But let's keep track of them, somewhere else though
 
 @csrf_exempt
 def skucheck(request, sku):
@@ -69,27 +64,16 @@ def skucheck(request, sku):
 
 
 
-    try:
-        product=Batch.objects.get(SKU=batch)   
-    except Product.DoesNotExist:
-        APIchek=wcapi.get('products', params={'sku':sku})
-        if len(APIchek)==0:
-            return HttpResponse(status=404)
-        product=Product.objects.create(SKU=APIchek[0]['sku'], name=APIchek[0]['name'], price=float(APIchek[0]['price']))
-        ##
-    if request.method == 'GET':
-        serializer=ProductSerializer(product)
-        return JsonResponse(serializer.data) 
-
-## Okay, so a few quick problems, number one, querying the entirety of the product lbirary is not the most efficient way to do things here. 
+"""
+The below function is interesting, but wouldn't this just be largely handled client side?
+I'm honestly not sure. 
+"""
 @csrf_exempt
 def product_search(request, name):
     product_list = [prod for prod in Product.objects.all() if fuzz.partial_ratio(prod.name, name) > 0.9]
-    return JsonResponse(product_list) ## Okay, I feel like I'm probably going to ahve to serialize this somehow,
-    ## Let's dive back into that serializer tutorial again, I feel like there's something I'm missing there.
+    return JsonResponse(product_list) 
 
-SecretKey='PFRkc9uBqK8XWY1GoOlG6PP+WvyRb7Pg9L8A+hO0' ## This is the aws secret key for copying stuff from and to S3, useful for backups and stuff
-
+SecretKey='PFRkc9uBqK8XWY1GoOlG6PP+WvyRb7Pg9L8A+hO0' 
 ## OKay, so after tonight, I can keep rolling with this shit, I just have a little bit more to figure out, God that fucking inflatable matt thing is going to be a lifesaver. Hopping over to target
 
 ## So, for product creation (Linked from the inventory system primarily.) we want to create a post data request with all the information for not only product data, but also batch and productvariant data, part of that will be turned around.
